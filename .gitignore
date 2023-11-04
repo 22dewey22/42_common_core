@@ -4,3 +4,5 @@
 /libft/libftTester/
 /get_next_line/gnlTester/**
 /get_next_line/gnlTester/
+*.o
+*.a
