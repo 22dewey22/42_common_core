@@ -6,7 +6,7 @@
 #    By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/18 08:19:01 by dwayenbo          #+#    #+#              #
-#    Updated: 2024/03/25 20:00:04 by dwayenbo         ###   ########.fr        #
+#    Updated: 2024/03/29 09:49:45 by dwayenbo         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -80,20 +80,28 @@ MANDATORY = arg_parser.c \
 			rendu.c \
 			rotations.c \
 			translations.c \
+			
+MANDATORY_V4 = 	srcs/v4/arg_parser_v4.c \
+				srcs/v4/arg_parser_utils.c \
+				srcs/v4/main.c \
+				srcs/v4/file_reader.c \
+				srcs/v4/calc_utils.c \
+				srcs/v4/map_calc.c \
+				srcs/v4/draw.c \
+				srcs/v4/colors.c
 
 BONUS = 
 
-TEST_SRCS = main_test.c
-TEST_OBJS = $(addprefix test/, $(TEST_SRCS:.c=.o))
+V4_OBJS = $(MANDATORY_V4:.c=.o)
 
 M_OBJS = $(addprefix srcs/, $(MANDATORY:.c=.o))
 B_OBJS = $(M_OBJS) $(addprefix srcs/bonus/, $(BONUS:.c=.o))
 
-DEPENDENCIES = 	$(patsubst %.o,%.d,$(M_OBJS)) $(patsubst %.o,%.d,$(B_OBJS))
+DEPENDENCIES = 	$(patsubst %.o,%.d,$(M_OBJS)) $(patsubst %.o,%.d,$(V4_OBJS)) $(patsubst %.o,%.d,$(B_OBJS))
 
 HEADERS = -Iheaders/
 
-CFLAGS = -Wall -Werror -Wextra -MMD -MP
+CFLAGS = -Wall -Werror -Wextra -MMD -MP 
 
 ################################################################
 #							RULES							   #
@@ -120,15 +128,16 @@ $(NAME): $(LIBDW) $(MLX) $(M_OBJS)
 	@printf "$(BIGreen)COMPILING BINARY : $(NAME)\n$(White)"
 	$(CC) $(CFLAGS) $(M_OBJS) $(MLX_LIB) $(DWLIB_LIB) -o $(NAME)
 
-test:	$(MLX) $(LIBDW) $(TEST_OBJS)
-		$(CC) $(CFLAGS) $(TEST_OBJS) $(MLX_LIB) $(DWLIB_LIB) -o test_mlx
+test:	$(MLX) $(LIBDW) $(V4_OBJS)
+		$(CC) $(CFLAGS) $(V4_OBJS) $(MLX_LIB) $(DWLIB_LIB) -o v4_fdf
+		
 re: fclean all
 
 clean: clean_dw
-	rm -f $(M_OBJS) $(B_OBJS) $(DEPENDENCIES)
+	rm -f $(M_OBJS) $(B_OBJS) $(DEPENDENCIES) $(V4_OBJS)
 
 fclean: clean fclean_dw
-	rm -f $(NAME)
+	rm -f $(NAME)  v4_fdf
 
 clean_dw:
 	@printf "$(BIRed)REMOVING PERSONNAL LIB OBJS AND DEPS\n$(White)"

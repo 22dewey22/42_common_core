@@ -6,7 +6,7 @@
 /*   By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/23 21:26:52 by dwayenbo          #+#    #+#             */
-/*   Updated: 2024/03/24 21:58:21 by dwayenbo         ###   ########.fr       */
+/*   Updated: 2024/03/28 08:13:14 by dwayenbo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ int	get_grid(t_prog *state)
 		line = get_next_line(fd);
 	}
 	close(fd);
+	exit(1);
 	if (error == 0)
 		return (connect_grid(state));
 	return (error);
