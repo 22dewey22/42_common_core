@@ -6,7 +6,7 @@
 /*   By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/13 10:25:52 by dwayenbo          #+#    #+#             */
-/*   Updated: 2024/03/24 20:14:15 by dwayenbo         ###   ########.fr       */
+/*   Updated: 2024/04/10 10:35:20 by dwayenbo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 # define GRID_ERROR 5
 # define MLX_ERROR 42
 # define MLX_IMG_ERROR 43
-# define INVALID_ARGS 4242
+# define INVALID_ARGS 6
 /*********************************************/
 /****************     KEYS    ****************/
 /*********************************************/
@@ -39,15 +39,20 @@
 /*********************************************/
 /****************     IMG     ****************/
 /*********************************************/
-# define WIN_WIDTH 1920
+# define WIN_WIDTH 1620
 # define WIN_HEIGHT 900
-# define IMG_WIDTH 1920
+# define IMG_WIDTH 1260
 # define IMG_HEIGHT 900
+# define MENU_HEIGHT IMG_HEIGHT
+# define MENU_WIDTH 360
 # define IMG_TOP_LEFT_X 0
 # define IMG_TOP_LEFT_Y 0
 # define BIG_ENDIAN 1
 # define LITTLE_ENDIAN 0
-
+/*********************************************/
+/****************    OTHERS    ***************/
+/*********************************************/
 # define M_PI 3.14159265358979323846
+# define BUFFER 8192
 
 #endif

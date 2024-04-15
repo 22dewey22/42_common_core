@@ -6,7 +6,7 @@
 #    By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/18 08:19:01 by dwayenbo          #+#    #+#              #
-#    Updated: 2024/03/29 09:49:45 by dwayenbo         ###   ########.fr        #
+#    Updated: 2024/04/10 10:14:51 by dwayenbo         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -58,7 +58,7 @@ DWLIB_LIB = -L$(LIBDIR) -ldw
 MLX = $(MLX_DIR)libmlx_Linux.a
 MLX_DIR = mlx_linux/
 MLX_GZ = minilibx-linux.tgz
-MLX_FLAGS = -I/usr/include -I$(MLX_DIR) -g3
+MLX_FLAGS = -I/usr/include -I$(MLX_DIR) -O3
 MLX_LIB = -L$(MLX_DIR) -lmlx_Linux -L/usr/lib -I$(MLX_DIR) -lXext -lX11 -lm -lz 
 
 ################################################################
@@ -67,29 +67,26 @@ MLX_LIB = -L$(MLX_DIR) -lmlx_Linux -L/usr/lib -I$(MLX_DIR) -lXext -lX11 -lm -lz
 
 NAME = fdf
 
-MANDATORY = arg_parser.c \
-			arg_parser_utils.c \
-			colors.c \
-			draw.c \
-			hooks.c \
-			init_graph.c \
-			init_graph_utils.c \
-			init_prog.c \
-			main.c \
-			mouse.c \
-			rendu.c \
-			rotations.c \
-			translations.c \
+MANDATORY = 	arg_parser_v4.c \
+				arg_parser_utils.c \
+				bresenham.c \
+				calc_utils.c \
+				colors.c \
+				colors2.c \
+				draw.c \
+				draw_utils.c \
+				file_reader.c \
+				hooks_utils.c \
+				hooks.c \
+				img.c \
+				main.c \
+				map_calc.c \
+				mouse_utils.c \
+				mouse.c \
+				menu.c \
+				menu2.c \
+				war_machine.c \
 			
-MANDATORY_V4 = 	srcs/v4/arg_parser_v4.c \
-				srcs/v4/arg_parser_utils.c \
-				srcs/v4/main.c \
-				srcs/v4/file_reader.c \
-				srcs/v4/calc_utils.c \
-				srcs/v4/map_calc.c \
-				srcs/v4/draw.c \
-				srcs/v4/colors.c
-
 BONUS = 
 
 V4_OBJS = $(MANDATORY_V4:.c=.o)
@@ -101,7 +98,7 @@ DEPENDENCIES = 	$(patsubst %.o,%.d,$(M_OBJS)) $(patsubst %.o,%.d,$(V4_OBJS)) $(p
 
 HEADERS = -Iheaders/
 
-CFLAGS = -Wall -Werror -Wextra -MMD -MP 
+CFLAGS = -Wall -Werror -Wextra -MMD -MP -O3
 
 ################################################################
 #							RULES							   #
@@ -128,16 +125,15 @@ $(NAME): $(LIBDW) $(MLX) $(M_OBJS)
 	@printf "$(BIGreen)COMPILING BINARY : $(NAME)\n$(White)"
 	$(CC) $(CFLAGS) $(M_OBJS) $(MLX_LIB) $(DWLIB_LIB) -o $(NAME)
 
-test:	$(MLX) $(LIBDW) $(V4_OBJS)
-		$(CC) $(CFLAGS) $(V4_OBJS) $(MLX_LIB) $(DWLIB_LIB) -o v4_fdf
-		
 re: fclean all
+
+bonus: all
 
 clean: clean_dw
 	rm -f $(M_OBJS) $(B_OBJS) $(DEPENDENCIES) $(V4_OBJS)
 
 fclean: clean fclean_dw
-	rm -f $(NAME)  v4_fdf
+	rm -f $(NAME)
 
 clean_dw:
 	@printf "$(BIRed)REMOVING PERSONNAL LIB OBJS AND DEPS\n$(White)"

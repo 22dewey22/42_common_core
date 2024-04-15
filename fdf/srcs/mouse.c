@@ -5,84 +5,59 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/03/25 19:03:30 by dwayenbo          #+#    #+#             */
-/*   Updated: 2024/03/26 07:25:46 by dwayenbo         ###   ########.fr       */
+/*   Created: 2024/03/29 16:12:38 by dwayenbo          #+#    #+#             */
+/*   Updated: 2024/04/10 08:26:05 by dwayenbo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <fdf.h>
+#include "../headers/fdf.h"
 
-int	mousemove(int x, int y, t_prog *state)
+void	zoom_in_graph(t_points *elems, int size, int x, int y)
 {
-	if (state->mouse.button >= 1 && state->mouse.button <= 3)
-		process_mouse_move(state->mouse.button, x, y, state);
-	return (EXIT_SUCCESS);
+	int	i;
+
+	i = 0;
+	while (i <= size)
+		zoom(elems + i++, 1.2, x, y);
 }
 
-void	process_mouse_move(int button, int x, int y, t_prog *state)
+void	zoom_out_graph(t_points *elems, int size, int x, int y)
 {
-	if (button == FDF_LEFT_CLICK && state->mouse.buffer == 15)
-	{
-		translate_all(state, x - state->mouse.x_prev, y - state->mouse.y_prev);
-		state->mouse.buffer = 0;
-		state->mouse.x_prev = x;
-		state->mouse.y_prev = y;
-		rendu(state);
-	}
-	if (button == FDF_RIGHT_CLICK && state->mouse.buffer == 15)
-	{
-		rotate(state, (y - state->mouse.y_prev) * 2 * M_PI / WIN_HEIGHT, (x
-				- state->mouse.x_prev) * 2 * M_PI / WIN_WIDTH, 0);
-		state->mouse.buffer = 0;
-		state->mouse.x_prev = x;
-		state->mouse.y_prev = y;
-		rendu(state);
-	}
-	if (button == FDF_MIDDLE_CLICK && state->mouse.buffer == 15)
-	{
-		rotate(state, 0, 0, (x - state->mouse.x_prev) * 2 * M_PI / WIN_WIDTH);
-		state->mouse.buffer = 0;
-		state->mouse.x_prev = x;
-		rendu(state);
-	}
-	state->mouse.buffer++;
+	int	i;
+
+	i = 0;
+	while (i <= size)
+		zoom(elems + i++, 1 / 1.2, x, y);
 }
 
-void	process_mouse_zoom(int button, int x, int y, t_prog *state)
+void	translate_graph(t_points *elems, int size, int x, int y)
 {
-	if (button == FDF_WHEEL_DOWN)
-		apply_zoom(state, x, y, 1 / state->settings.zoom);
-	else
-		apply_zoom(state, x, y, state->settings.zoom);
-	rendu(state);
+	int	i;
+
+	i = 0;
+	while (i <= size)
+		translate(elems + i++, x, y);
 }
 
-int	mouseclick(int button, int x, int y, t_prog *state)
+int	mouse_click(int button, int x, int y, t_hooks *utils)
 {
-	if (state->mouse.button == 0)
+	if (utils->mouse->button == 0)
 	{
-		state->mouse.button = button;
-		state->mouse.x_pressed = x;
-		state->mouse.y_pressed = y;
-		state->mouse.x_prev = x;
-		state->mouse.y_prev = y;
-		state->mouse.buffer = 0;
+		utils->mouse->button = button;
+		utils->mouse->x_prev = x;
+		utils->mouse->y_prev = y;
 	}
-	// if (on_menu(x, y) && state->mouse.button == FDF_LEFT_CLICK)
-	//     process_menu(x, y, state);
 	if (button == FDF_WHEEL_UP || button == FDF_WHEEL_DOWN)
-		process_mouse_zoom(button, x, y, state);
-	return (EXIT_SUCCESS);
+		load_next_image_with_zoom(utils, x, y, button);
+	return (0);
 }
 
-int	mouserelease(int button, int x, int y, t_prog *state)
+int	mouse_release(int button, int x, int y, t_mouse *mouse)
 {
-	if (button == state->mouse.button)
+	if (mouse->button == button)
 	{
-		state->mouse.buffer = 0;
-		state->mouse.button = 0;
+		mouse->button = 0;
+		mouse->buffer = 0;
 	}
-	(void)x;
-	(void)y;
-	return (EXIT_SUCCESS);
+	return (x + y);
 }

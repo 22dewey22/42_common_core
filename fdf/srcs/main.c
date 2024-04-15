@@ -5,103 +5,81 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/03/23 21:27:40 by dwayenbo          #+#    #+#             */
-/*   Updated: 2024/03/25 18:31:51 by dwayenbo         ###   ########.fr       */
+/*   Created: 2024/03/28 12:21:53 by dwayenbo          #+#    #+#             */
+/*   Updated: 2024/04/10 10:36:13 by dwayenbo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <fdf.h>
-
-/*
-t_grid	*current_line;
-t_grid	*current_elem;
-
-current_line = state->top_left;
-while (current_line)
-{
-	current_elem = current_line;
-	while (current_elem)
-	{
-		prout;
-		prout ;
-		current_elem = current_elem->right;
-	}
-	current_line = current_line->down;
-}
-*/
+#include "../headers/fdf.h"
 
 int	main(int ac, char **av)
 {
-	t_prog	state;
+	t_fdf		*fdf;
+	t_points	*calc_map;
+	t_mouse		mouse;
 
 	if (ac != 2)
-		return (kill_program(&state, INVALID_ARGS,
-				"Invalid number of arguments.\nUsage : ./fdf map\n"));
-	if (init_prog(&state, av) != EXIT_SUCCESS)
-		return (kill_program(&state, MLX_ERROR,
-				"Failure during MLX initialization\n"));
-	if (get_grid(&state) != EXIT_SUCCESS)
-		return (kill_program(&state, GRID_ERROR,
-				"Failure during file parsing\n"));
-	init_graph(&state);
-	if (rendu(&state) != EXIT_SUCCESS)
-		return (kill_program(&state, MLX_ERROR,
-				"Failure during rendering process\n"));
-	add_hooks(&state);
-	state.loop_on = 1;
-	mlx_loop(state.mlx);
-	return (kill_program(&state, EXIT_SUCCESS, 0));
+		return (kill_program(0, INVALID_ARGS, "Invalid number of arguments"));
+	fdf = init_fdf();
+	if (fdf == NULL)
+		return (kill_program(fdf, EXIT_FAILURE,
+				"Unable to init program (fdf level)"));
+	if (init_program(fdf, &calc_map, av) == EXIT_FAILURE)
+		return (kill_program(fdf, EXIT_FAILURE,
+				"Unable to init program (file or mlx level)"));
+	if (init_colorset(fdf) == EXIT_FAILURE)
+		return (kill_program(fdf, EXIT_FAILURE,
+				"Unable to init program (colorset level)"));
+	if (get_window(fdf, calc_map, av[1]) == EXIT_FAILURE)
+		return (kill_program(fdf, EXIT_FAILURE, "Unable to create window"));
+	set_hooks(&(t_hooks){&mouse, fdf, calc_map});
+	mlx_loop(fdf->mlx);
+	return (kill_program(fdf, EXIT_SUCCESS, NULL));
 }
 
-int	kill_program(t_prog *state, int return_value, char *err_msg)
+int	init_program(t_fdf *fdf, t_points **calc_map, char **av)
 {
-	if (return_value == INVALID_ARGS)
-	{
-		ft_printf_fd(2, err_msg);
-		return (INVALID_ARGS);
-	}
-	if (state->loop_on == 1)
-	{
-		mlx_loop_end(state->mlx);
-		state->loop_on = 0;
-	}
-	if (state->img.mlx_img)
-		mlx_destroy_image(state->mlx, state->img.mlx_img);
-	if (state->win)
-		mlx_destroy_window(state->mlx, state->win);
-	if (state->mlx)
-	{
-		mlx_destroy_display(state->mlx);
-		free(state->mlx);
-	}
-	if (state->top_left)
-		destroy_grid(state->top_left);
-	if (state->title != NULL)
-		free(state->title);
-	ft_printf_fd(2, err_msg);
-	return (return_value);
+	if (get_grid(av, fdf) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
+	*calc_map = NULL;
+	*calc_map = init_array(fdf->map, *calc_map);
+	if (*calc_map == NULL)
+		return (EXIT_FAILURE);
+	fdf->calc_map = *calc_map;
+	init_graph(*calc_map, fdf->map->height * fdf->map->width, M_PI / 3, -M_PI
+		/ 4);
+	get_first_img(fdf);
+	if (fdf->mlx == NULL || fdf->img == NULL)
+		return (EXIT_FAILURE);
+	if (fdf->img->mlx_img == NULL)
+		return (EXIT_FAILURE);
+	fdf->current_colorset = 0;
+	return (EXIT_SUCCESS);
 }
 
-void	destroy_grid(t_grid *top_left)
+t_fdf	*init_fdf(void)
 {
-	t_grid	*current_line;
-	t_grid	*temp_line;
-	t_grid	*current_elem;
-	t_grid	*temp_elem;
+	t_fdf	*fdf;
+	int		i;
 
-	if (top_left == NULL)
-		return ;
-	current_line = top_left;
-	while (current_line)
-	{
-		temp_line = current_line->down;
-		current_elem = current_line;
-		while (current_elem)
-		{
-			temp_elem = current_elem->right;
-			free(current_elem);
-			current_elem = temp_elem;
-		}
-		current_line = temp_line;
-	}
+	i = 0;
+	fdf = malloc(sizeof(t_fdf));
+	if (fdf == NULL)
+		return (NULL);
+	while (i < 7)
+		fdf->alternate_colorset[i++] = NULL;
+	fdf->mlx = NULL;
+	fdf->win = NULL;
+	fdf->img = NULL;
+	fdf->menu = NULL;
+	fdf->calc_map = NULL;
+	fdf->title = NULL;
+	fdf->map = malloc(sizeof(t_map));
+	if (fdf->map == NULL)
+		return (NULL);
+	fdf->map->has_color = 0;
+	fdf->map->colors = NULL;
+	fdf->map->z_val = NULL;
+	fdf->map->z_alt = 1.0;
+	return (fdf);
 }

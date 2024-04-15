@@ -6,14 +6,14 @@
 /*   By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/31 16:51:06 by dwayenbo          #+#    #+#             */
-/*   Updated: 2024/01/31 17:26:50 by dwayenbo         ###   ########.fr       */
+/*   Updated: 2024/03/27 08:10:41 by dwayenbo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
 # ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 1000000
+#  define BUFFER_SIZE 8192
 # endif
 # include <fcntl.h>
 # include <libft_stuff.h>

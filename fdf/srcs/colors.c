@@ -5,12 +5,12 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/03/24 05:08:58 by dwayenbo          #+#    #+#             */
-/*   Updated: 2024/03/25 14:29:21 by dwayenbo         ###   ########.fr       */
+/*   Created: 2024/03/29 09:40:53 by dwayenbo          #+#    #+#             */
+/*   Updated: 2024/04/10 09:10:18 by dwayenbo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <fdf.h>
+#include "../headers/fdf.h"
 
 int	get_color(int t, int r, int g, int b)
 {
@@ -30,67 +30,78 @@ int	get_trgb(int trgb, char c)
 	return (0);
 }
 
-int	get_mid_color(int color0, int color1, double dist, int step)
-{
-	double	dr;
-	double	dg;
-	double	db;
-
-	dr = (get_trgb(color1, 'r') - get_trgb(color0, 'r')) / dist;
-	dg = (get_trgb(color1, 'g') - get_trgb(color0, 'g')) / dist;
-	db = (get_trgb(color1, 'b') - get_trgb(color0, 'b')) / dist;
-	return (get_color(get_trgb(color1, 't'), get_trgb(color0, 'r') + dr * step,
-			get_trgb(color0, 'g') + dg * step, get_trgb(color0, 'b') + db
-			* step));
-}
-
-static int	parse_color_from_str(char *str, int normal)
+int	init_colorset(t_fdf *fdf)
 {
 	int	i;
-	int	output;
 
 	i = 0;
-	while (str[i] && str[i] != ',')
-		i++;
-	if (str[i])
-		i++;
-	if (str[i] == 0)
-		return (0);
-	if (ft_strncmp(&str[i], "0x", 2) == 0 || ft_strncmp(&str[i], "0X", 2) == 0)
-		i += 2;
-	if (normal == 1)
-		output = ft_atoi_base(&str[i], "0123465789abcdef");
-	else 
-		output = ft_atoi_base(&str[i], "0123465798abcdefP");
-	if (output == 0)
-		return (ft_atoi_base(&str[i], "0123465789ABCDEF"));
-	return (output);
-}
-
-void	get_elem_colors(t_grid *elem, t_prog *state, char *split)
-{
-	if (ft_ischarset(',', split))
+	fdf->alternate_colorset[i] = get_full_white(fdf);
+	if (fdf->alternate_colorset[i++] == NULL)
+		return (EXIT_FAILURE);
+	if (fdf->map->has_color)
 	{
-		state->settings.colors_in_file = 1;
-		elem->color[3] = parse_color_from_str(split, 1);
+		fdf->alternate_colorset[i++] = fdf->map->colors;
+		fdf->alternate_colorset[i++] = &fdf->map->colors[fdf->map->width
+			* fdf->map->height];
 	}
-	else
-		elem->color[3] = 0xffffff;
-	elem->color[4] = parse_color_from_str(split, 0);
+	fdf->alternate_colorset[i] = get_colorset(0xff00ff, 0x00ff00, fdf);
+	if (fdf->alternate_colorset[i++] == NULL)
+		return (EXIT_FAILURE);
+	fdf->alternate_colorset[i] = get_colorset(0xff00ff, 0xffffff, fdf);
+	if (fdf->alternate_colorset[i++] == NULL)
+		return (EXIT_FAILURE);
+	fdf->alternate_colorset[i] = get_colorset(0xffff00, 0xffff, fdf);
+	if (fdf->alternate_colorset[i++] == NULL)
+		return (EXIT_FAILURE);
+	fdf->alternate_colorset[i] = get_earth_colorset(fdf);
+	if (fdf->alternate_colorset[i++] == NULL)
+		return (EXIT_FAILURE);
+	return (EXIT_SUCCESS);
 }
 
-void	apply_colorset_one(t_prog *state, t_grid *elem)
+int	*get_colorset(int color1, int color2, t_fdf *fdf)
 {
-	double	dist;
+	int			zmin;
+	int			zmax;
+	int			i;
+	t_dcolor	dcolor;
+
+	i = 1;
+	zmin = fdf->map->z_val[0];
+	zmax = fdf->map->z_val[0];
+	while (i < fdf->map->height * fdf->map->width)
+	{
+		if (fdf->map->z_val[i] > zmax)
+			zmax = fdf->map->z_val[i];
+		if (fdf->map->z_val[i] < zmin)
+			zmin = fdf->map->z_val[i];
+		i++;
+	}
+	dcolor.r0 = (color1 >> 16) & 0xff;
+	dcolor.g0 = (color1 >> 8) & 0xff;
+	dcolor.b0 = color1 & 0xff;
+	dcolor.dr = ((color2 >> 16) & 0xff) - ((color1 >> 16) & 0xff);
+	dcolor.dg = ((color2 >> 8) & 0xff) - ((color1 >> 8) & 0xff);
+	dcolor.db = (color2 & 0xff) - (color1 & 0xff);
+	return (fill_color_grid(fdf, zmax, zmin, dcolor));
+}
+
+int	*fill_color_grid(t_fdf *fdf, int zmax, int zmin, t_dcolor dcolor)
+{
+	int		*output;
 	int		i;
+	float	tmp;
 
-	dist = state->settings.z_max - state->settings.z_min;
+	output = malloc(sizeof(int) * fdf->map->height * fdf->map->width);
+	if (output == NULL)
+		return (NULL);
 	i = 0;
-	while (i < 3)
+	while (i < fdf->map->height * fdf->map->width)
 	{
-		elem->color[i] = get_mid_color(state->settings.colors[i][0],
-				state->settings.colors[i][1], dist, elem->coords.z_init
-				- state->settings.z_min);
-		i++;
+		tmp = (fdf->map->z_val[i] - zmin) / (float)(zmax - zmin);
+		output[i++] = ((int)(dcolor.r0 + dcolor.dr
+					* tmp) << 16) | ((int)(dcolor.g0 + dcolor.dg
+					* tmp) << 8) | (int)(dcolor.b0 + dcolor.db * tmp);
 	}
+	return (output);
 }

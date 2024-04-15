@@ -5,23 +5,76 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/03/24 07:33:22 by dwayenbo          #+#    #+#             */
-/*   Updated: 2024/03/25 20:40:34 by dwayenbo         ###   ########.fr       */
+/*   Created: 2024/03/28 20:03:44 by dwayenbo          #+#    #+#             */
+/*   Updated: 2024/04/10 08:06:36 by dwayenbo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <fdf.h>
+#include "../headers/fdf.h"
 
-void	draw(t_prog *state, t_grid *elem0, t_grid *elem1)
+void	put_pxl_to_img(t_img img, int x, int y, int color)
+{
+	unsigned char	*pxl;
+
+	if (!is_in_img(x, y))
+		return ;
+	pxl = (unsigned char *)img.addr + y * img.line_len + x * img.bpp / 8;
+	*(unsigned int *)pxl = color;
+}
+
+void	draw_right(t_fdf *fdf, int x, int y, t_points *calc_map)
+{
+	t_line	line;
+
+	if (x < fdf->map->width - 1)
+	{
+		line.x1 = (int)(calc_map + y * fdf->map->width + x + 1)->x;
+		line.y1 = (int)(calc_map + y * fdf->map->width + x + 1)->y;
+		line.color1 = fdf->alternate_colorset[fdf->current_colorset][y
+			* fdf->map->width + x + 1];
+	}
+	else
+		return ;
+	line.x0 = (int)(calc_map + y * fdf->map->width + x)->x;
+	line.y0 = (int)(calc_map + y * fdf->map->width + x)->y;
+	line.color0 = fdf->alternate_colorset[fdf->current_colorset][y
+		* fdf->map->width + x];
+	draw_line(fdf->img, line);
+}
+
+void	draw_down(t_fdf *fdf, int x, int y, t_points *calc_map)
+{
+	t_line	line;
+
+	if (y < fdf->map->height - 1)
+	{
+		line.x1 = (int)(calc_map + (y + 1) * fdf->map->width + x)->x;
+		line.y1 = (int)(calc_map + (y + 1) * fdf->map->width + x)->y;
+		line.color1 = fdf->alternate_colorset[fdf->current_colorset][(y + 1)
+			* fdf->map->width + x];
+	}
+	else
+		return ;
+	line.x0 = (int)(calc_map + y * fdf->map->width + x)->x;
+	line.y0 = (int)(calc_map + y * fdf->map->width + x)->y;
+	line.color0 = fdf->alternate_colorset[fdf->current_colorset][y
+		* fdf->map->width + x];
+	draw_line(fdf->img, line);
+}
+
+void	draw_line(t_img *img, t_line line)
 {
 	t_bres	bres;
 
-	if (elem0 == NULL || elem1 == NULL)
+	if (!line_on_screen(line))
 		return ;
-	bres.x0 = (int)elem0->coords.x_calc;
-	bres.x1 = (int)elem1->coords.x_calc;
-	bres.y0 = (int)elem0->coords.y_calc;
-	bres.y1 = (int)elem1->coords.y_calc;
+	if (!is_in_img(line.x0, line.y0))
+		line = (t_line){line.x1, line.y1, line.color1, line.x0, line.y0,
+			line.color0};
+	bres.x0 = line.x0;
+	bres.x1 = line.x1;
+	bres.y0 = line.y0;
+	bres.y1 = line.y1;
 	bres.dx = ft_abs(bres.x0 - bres.x1);
 	bres.dy = -ft_abs(bres.y0 - bres.y1);
 	bres.sx = ft_signof(bres.x1 - bres.x0);
@@ -29,56 +82,6 @@ void	draw(t_prog *state, t_grid *elem0, t_grid *elem1)
 	bres.error = bres.dx + bres.dy;
 	bres.d_error = 0;
 	bres.dist = sqrt(pow(bres.dx, 2) + pow(bres.dy, 2));
-	bres.color0 = elem0->color[state->settings.colorset];
-	bres.color1 = elem1->color[state->settings.colorset];
-	bres.step = 0;
-	bresenham(bres, state);
-}
-
-void	bresenham(t_bres bres, t_prog *state)
-{
-	while (1)
-	{
-		put_pxl_to_img(state->img, bres.x0, bres.y0, get_mid_color(bres.color0,
-				bres.color1, bres.dist, bres.step));
-		if (bres.x0 == bres.x1 && bres.y0 == bres.y1)
-			break ;
-		bres.d_error = 2 * bres.error;
-		if (bres.d_error >= bres.dy)
-		{
-			if (bres.x0 == bres.x1)
-				break ;
-			bres.error += bres.dy;
-			bres.x0 += bres.sx;
-		}
-		if (bres.d_error <= bres.dx)
-		{
-			if (bres.y0 == bres.y1)
-				break ;
-			bres.error += bres.dx;
-			bres.y0 += bres.sy;
-		}
-		bres.step++;
-	}
-}
-
-void	put_pxl_to_img(t_img img, int x, int y, int color)
-{
-	unsigned char	*pxl;
-
-	if (!is_in_img(x, y, img))
-		return ;
-	pxl = (unsigned char *)img.addr + y * img.line_len + x * img.bpp / 8;
-	if (img.endian != 0)
-		color = get_color(get_trgb(color, 'b'), get_trgb(color, 'r'),
-				get_trgb(color, 'g'), get_trgb(color, 't'));
-	*(unsigned int *)pxl = color;
-}
-
-int	is_in_img(int x, int y, t_img img)
-{
-	(void)img;
-	if (x >= 0 && y >= 0 && y <= IMG_HEIGHT && x < IMG_WIDTH)
-		return (1);
-	return (0);
+	init_bres_color(&bres, line);
+	bresenham(bres, img, 0);
 }

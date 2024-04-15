@@ -5,57 +5,112 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dwayenbo <dwayenbo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/03/24 08:14:24 by dwayenbo          #+#    #+#             */
-/*   Updated: 2024/03/25 02:51:23 by dwayenbo         ###   ########.fr       */
+/*   Created: 2024/03/28 12:24:46 by dwayenbo          #+#    #+#             */
+/*   Updated: 2024/04/10 10:00:16 by dwayenbo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <fdf.h>
+#include "../headers/fdf.h"
 
-void	connect_right_down(t_grid *down_line, t_grid *current)
+void	destroy_file_list(t_readbuf **first)
 {
-	while (down_line->right && current->right)
+	t_readbuf	*current;
+	t_readbuf	*tmp;
+
+	current = *first;
+	*first = NULL;
+	while (current)
 	{
-		current->down = down_line;
-		down_line->up = current;
-		current = current->right;
-		down_line = down_line->right;
+		tmp = current->next;
+		free(current);
+		current = tmp;
 	}
-	current->down = down_line;
-	if (down_line)
-		current->down->up = current;
 }
 
-int	is_valid_line(char *line)
+t_readbuf	*create_rbuf_elem(void)
+{
+	t_readbuf	*new;
+	int			i;
+
+	i = 0;
+	new = malloc(sizeof(t_readbuf));
+	if (!new)
+		return (NULL);
+	while (i < BUFFER)
+		new->buf[i++] = 0;
+	new->next = NULL;
+	return (new);
+}
+
+int	atoi_fdf(char *file, int *i)
+{
+	int	output;
+	int	isneg;
+
+	isneg = 1;
+	output = 0;
+	if (file[*i] == '-')
+	{
+		isneg = -1;
+		*i += 1;
+	}
+	while (file[*i] && file[*i] <= '9' && file[*i] >= '0')
+	{
+		output = output * 10 + file[*i] - '0';
+		*i += 1;
+	}
+	if (file[*i] == ',')
+		*i += 1;
+	return (output * isneg);
+}
+
+int	atoi_hex_fdf(char *file, char *base)
+{
+	int	output;
+	int	j;
+	int	k;
+	int	size;
+
+	size = 0;
+	while (base[size])
+		size++;
+	k = 0;
+	if (ft_strncmp("0x", file, 2) == 0)
+		k += 2;
+	output = 0;
+	while (file[k] && ft_ischarset(file[k], base))
+	{
+		j = 0;
+		while (file[k] != base[j])
+			j++;
+		output = output * size + j;
+		k++;
+	}
+	return (output);
+}
+
+int	atoi_and_colors(char *file, int *zval, int *colors, t_map *map)
 {
 	int	i;
 
 	i = 0;
-	while (line[i])
+	*zval = atoi_fdf(file, &i);
+	if (map->has_color)
 	{
-		if (line[i] >= '0' && line[i] <= '9')
-			return (1);
-		i++;
+		*colors = atoi_hex_fdf(&file[i], "0123456789abcdef");
+		if (*colors == 0)
+			*colors = atoi_hex_fdf(&file[i], "0123456789ABCDEF");
+		if (*colors == 0)
+			*colors = 0xffffff;
+		*(colors + map->height * map->width) = atoi_hex_fdf(&file[i],
+				"0123456798abcdefp");
+		if (*(colors + map->height * map->width) == 0)
+			*(colors + map->height * map->width) = atoi_hex_fdf(&file[i],
+					"0123456798ABCDEFP");
+		if (*(colors + map->height * map->width) == 0)
+			*(colors + map->height * map->width) = 0xffffff;
 	}
-	return (0);
-}
-
-t_grid	*create_grid_elem(int x, int y, int z)
-{
-	t_grid	*output;
-
-	output = malloc(sizeof(t_grid));
-	if (!output)
-		return (NULL);
-	output->coords.x_init = (double)x;
-	output->coords.y_init = (double)y;
-	output->coords.z_init = (double)z;
-	output->coords.x_calc = 0;
-	output->coords.y_calc = 0;
-	output->coords.z_calc = 0;
-	output->down = 0;
-	output->up = 0;
-	output->left = 0;
-	output->right = 0;
-	return (output);
+	while (file[i] && file[i] != '\n' && file[i] != ' ')
+		i++;
+	return (i);
 }
