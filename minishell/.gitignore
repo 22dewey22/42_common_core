@@ -1,0 +1,9 @@
+*.d
+*.o
+*.vscode
+*a.out
+*.a
+minishell
+minishell_debug
+minishell_debug_tty
+minishell_debug_rl
